@@ -214,7 +214,8 @@ if prompt:
 
     try:
         # Show typing indicator
-        with st.empty():
+        typing_container = st.empty()
+        with typing_container:
             st.markdown("""
                 <div class="typing-indicator pulse-animation">
                     <span>Assistant is thinking</span>
@@ -226,6 +227,7 @@ if prompt:
             time.sleep(1)  # Simulate typing delay
 
         response = model.generate_content(contents=gemini_messages)
+        typing_container.empty()  # Clear typing indicator
 
         # Extract the generated text from the response
         assistant_reply = response.text
