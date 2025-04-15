@@ -150,7 +150,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="chat-header"><h1 class="float-animation">✨ Swastick\'s Chatbot ✨</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="chat-header"><h1 class="float-animation">✨ Rinelat\'s Chatbot ✨</h1></div>', unsafe_allow_html=True)
 
 
 
