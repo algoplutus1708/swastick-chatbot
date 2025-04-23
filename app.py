@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="Swastick's Chatbot", layout="centered")
+st.set_page_config(page_title="Rinned's Chatbot", layout="centered")
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -152,36 +152,140 @@ st.markdown("""
 
 st.markdown('<div class="chat-header"><h1 class="float-animation">✨ Rinned\'s Chatbot ✨</h1></div>', unsafe_allow_html=True)
 
-
-
-
+# Ensure messages are initialized before usage
 if "messages" not in st.session_state:
     st.session_state["messages"] = [
         {"role": "assistant", "content": "Hi, how can I help you today?"}
     ]
 
-
-# Initialize reactions storage if not exists
+# Ensure reactions are initialized before usage
 if "reactions" not in st.session_state:
-    st.session_state.reactions = {}
+    st.session_state["reactions"] = {}
 
-# Display chat messages with new UI elements
-for i, msg in enumerate(st.session_state.messages):
-    with st.chat_message(msg["role"]):
-        # Add timestamp if it exists
-        timestamp = msg.get("timestamp", datetime.now().strftime("%H:%M"))
-        message_class = "user-message" if msg["role"] == "user" else "assistant-message"
-        st.markdown(f'<div class="message-container"><div class="chat-message {message_class}">{msg["content"]}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="timestamp">{timestamp}</div>', unsafe_allow_html=True)
-        
-        # Add reaction buttons if this is an assistant message
-        if msg["role"] == "assistant" and str(i) in st.session_state.reactions:
-            reactions = st.session_state.reactions[str(i)]
-            st.markdown(f"""
-                <div class="reaction-buttons">
-                    {' '.join([f'<button>{r}</button>' for r in reactions])}
-                </div>
-            """, unsafe_allow_html=True)
+# Add buttons for clearing, exporting, saving, loading chat history, clearing reactions, and showing chat history
+col1, col2, col3, col4, col5, col6 = st.columns(6)
+
+def convert_messages_to_text(messages):
+    lines = []
+    for msg in messages:
+        role = "User" if msg["role"] == "user" else "Assistant"
+        timestamp = msg.get("timestamp", "")
+        content = msg["content"]
+        lines.append(f"[{timestamp}] {role}: {content}")
+    return "\n".join(lines)
+
+def save_chat_history():
+    chat_text = convert_messages_to_text(st.session_state["messages"])
+    filename = f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(chat_text)
+    st.success(f"Chat history saved to {filename}")
+
+def load_chat_history(uploaded_file):
+    if uploaded_file is not None:
+        content = uploaded_file.read().decode("utf-8")
+        lines = content.splitlines()
+        loaded_messages = []
+        for line in lines:
+            if line.startswith("[") and "]" in line:
+                try:
+                    timestamp_end = line.index("]")
+                    timestamp = line[1:timestamp_end]
+                    rest = line[timestamp_end+2:]
+                    role_end = rest.index(":")
+                    role = rest[:role_end].strip().lower()
+                    content = rest[role_end+1:].strip()
+                    if role == "user":
+                        loaded_messages.append({"role": "user", "content": content, "timestamp": timestamp})
+                    elif role == "assistant":
+                        loaded_messages.append({"role": "assistant", "content": content, "timestamp": timestamp})
+                except Exception:
+                    continue
+        if loaded_messages:
+            st.session_state["messages"] = loaded_messages
+            st.success("Chat history loaded successfully.")
+        else:
+            st.warning("No valid chat messages found in the file.")
+
+with col1:
+    if st.button("Clear Chat History"):
+        st.session_state["messages"] = [
+            {"role": "assistant", "content": "Hi, how can I help you today?"}
+        ]
+        st.session_state["reactions"] = {}
+        try:
+            st.experimental_rerun()
+        except AttributeError:
+            st.stop()
+
+with col2:
+    chat_text = convert_messages_to_text(st.session_state["messages"])
+    st.download_button(
+        label="Export Chat History",
+        data=chat_text,
+        file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+        mime="text/plain"
+    )
+
+with col3:
+    if st.button("Save Chat History"):
+        save_chat_history()
+
+with col4:
+    uploaded_file = st.file_uploader("Load Chat History", type=["txt"])
+    if uploaded_file is not None:
+        load_chat_history(uploaded_file)
+
+with col5:
+    if st.button("Clear All Reactions"):
+        st.session_state["reactions"] = {}
+
+with col6:
+    show_history = st.checkbox("Show Chat History", value=True)
+
+if show_history:
+    for i, msg in enumerate(st.session_state.messages):
+        with st.chat_message(msg["role"]):
+            # Add timestamp if it exists
+            timestamp = msg.get("timestamp", datetime.now().strftime("%H:%M"))
+            message_class = "user-message" if msg["role"] == "user" else "assistant-message"
+            st.markdown(f'<div class="message-container"><div class="chat-message {message_class}">{msg["content"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="timestamp">{timestamp}</div>', unsafe_allow_html=True)
+            
+            # Add reaction buttons if this is an assistant message
+            if msg["role"] == "assistant":
+                # Display emoji reaction buttons
+                reaction_emojis = ["👍", "👎", "❤️"]
+                if str(i) not in st.session_state.reactions:
+                    st.session_state.reactions[str(i)] = []
+                reactions = st.session_state.reactions[str(i)]
+
+                def add_reaction(msg_index, emoji):
+                    if emoji not in st.session_state.reactions[msg_index]:
+                        st.session_state.reactions[msg_index].append(emoji)
+
+                cols = st.columns(len(reaction_emojis))
+                for idx, emoji in enumerate(reaction_emojis):
+                    if cols[idx].button(emoji, key=f"react_{i}_{emoji}"):
+                        add_reaction(str(i), emoji)
+
+                # Show current reactions
+                if reactions:
+                    st.markdown(f"""
+                        <div class="reaction-buttons">
+                            {' '.join([f'<button>{r}</button>' for r in reactions])}
+                        </div>
+                    """, unsafe_allow_html=True)
+
+# Help section
+st.markdown("---")
+st.markdown("### Help & Instructions")
+st.markdown("""
+- Type your message in the input box and press Enter to chat with the assistant.
+- Use the buttons above to clear, save, load, or export chat history.
+- React to assistant messages using the emoji buttons below each message.
+- Clear all reactions using the 'Clear All Reactions' button.
+""")
 
 prompt = st.chat_input("Type your message here:")
 

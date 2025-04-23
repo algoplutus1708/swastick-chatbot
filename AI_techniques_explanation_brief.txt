@@ -1,0 +1,16 @@
+Brief Explanation of AI Techniques in the Chatbot Project:
+
+1. First Order Logic (FOL):
+Represents knowledge and reasoning using logical statements. In this project, it relates to how user intents and responses can be seen as logical facts and rules, helping the chatbot understand and respond logically.
+
+2. Heuristic:
+Uses rules of thumb or strategies to improve efficiency. The chatbot uses heuristics by maintaining chat history to provide context and improve response relevance and user experience.
+
+3. Backtracking:
+A search method that tries and undoes choices to find solutions. Though not explicitly used, it relates to how a chatbot might explore different conversation paths or recover from misunderstandings.
+
+4. Constraint Satisfaction Problem (CSP):
+Involves finding values that meet constraints. The chatbot ensures conversation consistency by satisfying constraints like context maintenance and user intent, helping produce valid responses.
+
+Summary:
+These AI techniques provide foundational ideas that support the design and functioning of the chatbot, even if the project mainly uses a generative AI model for responses.
